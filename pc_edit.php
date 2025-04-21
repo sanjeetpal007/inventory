@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $newData = json_encode([
             'OUTSTATION' => $_POST['OUTSTATION'],
-            'DESKTOP_PC_MODEL' => $_POST['DESKTOP_PC_MODEL'],
+            'DESKTOP_PC_MODEL' => $pc['DESKTOP_PC_MODEL'], // keep old value
             'CORRECT_SERIAL_NUMBER' => $_POST['CORRECT_SERIAL_NUMBER'],
             'INVENTORY' => $_POST['INVENTORY'],
             'WORKSTATION' => $_POST['WORKSTATION'],
@@ -43,8 +43,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $stmt = $pdo->prepare("UPDATE pc SET OUTSTATION=?, DESKTOP_PC_MODEL=?, CORRECT_SERIAL_NUMBER=?, INVENTORY=?, WORKSTATION=?, USERNAME=?, FLOOR_NUMBER=?, USER_ID=?, VERIFIED=? WHERE id=?");
         $stmt->execute([
-            $_POST['OUTSTATION'], $_POST['DESKTOP_PC_MODEL'], $_POST['CORRECT_SERIAL_NUMBER'], $_POST['INVENTORY'],
-            $_POST['WORKSTATION'], $_POST['USERNAME'], $_POST['FLOOR_NUMBER'],
+            $_POST['OUTSTATION'],
+            $pc['DESKTOP_PC_MODEL'], // keep the same value
+            $_POST['CORRECT_SERIAL_NUMBER'],
+            $_POST['INVENTORY'],
+            $_POST['WORKSTATION'],
+            $_POST['USERNAME'],
+            $_POST['FLOOR_NUMBER'],
             !empty($_POST['USER_ID']) ? $_POST['USER_ID'] : null,
             $newVerified, $id
         ]);
@@ -75,7 +80,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       max-height: 150px;
       overflow-y: auto;
       background-color: white;
-      position: absolute;
       z-index: 9999;
       width: calc(100% - 20px);
     }
@@ -109,7 +113,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     .form-container input[type="text"],
-    .form-container input[type="checkbox"] {
+    .form-container input[type="checkbox"],
+    .form-container select {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
@@ -164,6 +169,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .half-field {
       flex: 1 1 calc(50% - 5px);
     }
+	@media screen and (max-width: 768px) { 
+		.half-field {
+		  flex: 1 1 calc(100% - 5px);
+		}
+	
+	}
   </style>
 </head>
 <body>
@@ -210,7 +221,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
       </div>
 
-      <!-- Remaining read-only fields -->
       <?php
       $readonlyFields = ['VENDOR_NAME', 'SN', 'PC_SERIAL_NUMBER'];
       foreach ($readonlyFields as $field):
@@ -219,16 +229,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <input type="text" value="<?= htmlspecialchars($pc[$field]) ?>" disabled><br>
       <?php endforeach; ?>
 
-      <!-- Editable Fields -->
       <?php
-      $editableFields = ['CORRECT_SERIAL_NUMBER', 'INVENTORY', 'WORKSTATION', 'USERNAME', 'FLOOR_NUMBER'];
+      $editableFields = ['CORRECT_SERIAL_NUMBER', 'INVENTORY', 'WORKSTATION', 'USERNAME'];
       foreach ($editableFields as $field):
       ?>
         <label for="<?= $field ?>"><?= str_replace("_", " ", $field) ?>:</label>
         <input type="text" id="<?= $field ?>" name="<?= $field ?>" value="<?= htmlspecialchars($pc[$field]) ?>"><br>
       <?php endforeach; ?>
 
-      <!-- USER ID with AJAX -->
+      <!-- Dropdown for FLOOR NUMBER -->
+      <label for="FLOOR_NUMBER">FLOOR NUMBER:</label>
+      <select name="FLOOR_NUMBER" id="FLOOR_NUMBER">
+        <?php
+        $floors = ['GROUND', 'LOBBY', '1st FLOOR', '2nd FLOOR', '3rd FLOOR', '4th FLOOR', '5th FLOOR', '6th FLOOR', '7th FLOOR'];
+        foreach ($floors as $floor):
+          $selected = ($pc['FLOOR_NUMBER'] === $floor) ? 'selected' : '';
+          echo "<option value=\"$floor\" $selected>$floor</option>";
+        endforeach;
+        ?>
+      </select><br>
+
       <label for="USER_ID">User ID:</label>
       <input type="text" id="USER_ID" name="USER_ID" value="<?= htmlspecialchars($pc['USER_ID']) ?>">
       <div id="userDropdown" class="dropdown-results"></div><br>

@@ -22,7 +22,6 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
     }
 
     .form-container {
-      
       top: 0;
       left: 0;
       right: 0;
@@ -35,7 +34,6 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
     .form-controls {
       display: flex;
       justify-content: space-between;
-      flex-wrap: wrap;
       gap: 10px;
       align-items: center;
     }
@@ -110,7 +108,7 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
     }
 
     .btn-small {
-      padding: 6px 10px;
+      padding: 8px 10px;
     }
 
     .back-btn {
@@ -124,7 +122,7 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
       display: none;
       max-width: 300px;
     }
-	/* Card UI for mobile */
+
     .pc-card {
       display: none;
       flex-direction: column;
@@ -142,11 +140,17 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
 
     .pc-card label {
       font-weight: bold;
+	  display: inline-block;
+		width: 32%;
     }
+
     @media (max-width: 768px) {
       table {
         display: none;
       }
+	  #search{
+		width:80%
+	}
 
       .form-controls {
         flex-direction: column;
@@ -165,9 +169,27 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
         display: flex;
       }
     }
-	
-	
-	
+
+    /* Sorting styles */
+    th.sortable {
+      cursor: pointer;
+      position: relative;
+    }
+
+    th.sortable::after {
+      content: '';
+      position: absolute;
+      right: 8px;
+      font-size: 12px;
+    }
+
+    th.sortable.asc::after {
+      content: ' ▲';
+    }
+
+    th.sortable.desc::after {
+      content: ' ▼';
+    }
   </style>
 </head>
 <body>
@@ -176,7 +198,7 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
   <div class="form-controls">
     <a href="pc_add.php" class="btn">➕ Add New PC</a>
     <div>
-      <label for="search">Search / Scan:</label>
+      
       <div style="display: flex; gap: 6px; align-items: center;">
         <input type="text" id="search" placeholder="Scan or search anything...">
         <button id="scanBtn" class="btn btn-small" type="button">📷 Scan</button>
@@ -201,16 +223,16 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
   <table id="pcTable">
     <thead>
       <tr>
-        <th>SN</th>
-        <th>Vendor</th>
-        <th>Invoice</th>
-        <th>Model</th>
-        <th>Serial</th>
-        <th>Correct Serial</th>
-        <th>Workstation</th>
-        <th>Username</th>
-        <th>Floor</th>
-        <th>User ID</th>
+        <th class="sortable">SN</th>
+        <th class="sortable">Vendor</th>
+        <th class="sortable">Invoice</th>
+        <th class="sortable">Model</th>
+        <th class="sortable">Serial</th>
+        <th class="sortable">Correct Serial</th>
+        <th class="sortable">Workstation</th>
+        <th class="sortable">Username</th>
+        <th class="sortable">Floor</th>
+        <th class="sortable">User ID</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -234,8 +256,7 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
       <?php endforeach; ?>
     </tbody>
   </table>
-  
-  <!-- Cards for small screens -->
+
   <div id="cardContainer">
     <?php foreach ($pcs as $pc): ?>
       <div class="pc-card" data-card>
@@ -272,6 +293,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let currentPage = 1;
   let rowsPerPage = parseInt(entriesSelect.value);
+  let currentSort = { index: null, direction: 'asc' };
 
   function filterRows() {
     const term = searchInput.value.toLowerCase();
@@ -282,13 +304,27 @@ document.addEventListener('DOMContentLoaded', function () {
     );
   }
 
+  function sortRows(rows) {
+    const { index, direction } = currentSort;
+    if (index === null) return rows;
+
+    return rows.sort((a, b) => {
+      const valA = a.cells[index].textContent.trim().toLowerCase();
+      const valB = b.cells[index].textContent.trim().toLowerCase();
+      const numA = parseFloat(valA), numB = parseFloat(valB);
+      const isNumeric = !isNaN(numA) && !isNaN(numB);
+      let cmp = isNumeric ? numA - numB : valA.localeCompare(valB);
+      return direction === 'asc' ? cmp : -cmp;
+    });
+  }
+
   function renderTable() {
     const filtered = filterRows();
+    const sorted = sortRows(filtered);
     const start = (currentPage - 1) * rowsPerPage;
-    const pageRows = filtered.slice(start, start + rowsPerPage);
+    const pageRows = sorted.slice(start, start + rowsPerPage);
 
     tbody.innerHTML = '';
-
     if (pageRows.length > 0) {
       pageRows.forEach(row => tbody.appendChild(row));
     } else {
@@ -297,13 +333,12 @@ document.addEventListener('DOMContentLoaded', function () {
       tbody.appendChild(noDataRow);
     }
 
-    renderPagination(filtered.length);
+    renderPagination(sorted.length);
   }
 
   function renderPagination(total) {
     const pageCount = Math.ceil(total / rowsPerPage);
     pagination.innerHTML = '';
-
     if (pageCount <= 1) return;
 
     for (let i = 1; i <= pageCount; i++) {
@@ -329,9 +364,23 @@ document.addEventListener('DOMContentLoaded', function () {
     renderTable();
   });
 
+  // Sort on header click
+  document.querySelectorAll('#pcTable thead th.sortable').forEach((th, index) => {
+    th.addEventListener('click', () => {
+      const isSame = currentSort.index === index;
+      currentSort.direction = isSame && currentSort.direction === 'asc' ? 'desc' : 'asc';
+      currentSort.index = index;
+
+      document.querySelectorAll('#pcTable thead th.sortable').forEach(h => h.classList.remove('asc', 'desc'));
+      th.classList.add(currentSort.direction);
+
+      renderTable();
+    });
+  });
+
   renderTable();
 
-  // Barcode scanner logic
+  // Barcode scanner
   const scanBtn = document.getElementById('scanBtn');
   const qrReader = document.getElementById('qr-reader');
 
@@ -348,13 +397,10 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('search').value = scannedValue;
             currentPage = 1;
             renderTable();
-
             html5QrCode.stop();
             qrReader.style.display = 'none';
           },
-          error => {
-            // Ignore scanning errors
-          }
+          error => {}
         ).catch(err => {
           console.error("Camera start error:", err);
           alert("Could not start scanner. Please allow camera access.");

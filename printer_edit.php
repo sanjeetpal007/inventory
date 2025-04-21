@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     .form-container {
-      display: grid;
+     # display: grid;
       grid-template-columns: 1fr;
       gap: 15px;
     }
@@ -105,6 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .form-group {
       display: flex;
       flex-direction: column;
+	  margin:1%
     }
 
     label {

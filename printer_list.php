@@ -33,7 +33,6 @@ $printers = $pdo->query("SELECT * FROM printer")->fetchAll(PDO::FETCH_ASSOC);
     .form-controls {
       display: flex;
       justify-content: space-between;
-      flex-wrap: wrap;
       gap: 10px;
       align-items: center;
     }
@@ -65,9 +64,11 @@ $printers = $pdo->query("SELECT * FROM printer")->fetchAll(PDO::FETCH_ASSOC);
     }
 
     th {
-      background-color: #f4f4f4;
-      white-space: nowrap;
+		background-color: #f4f4f4;
+		white-space: nowrap;
     }
+
+    
 
     .pagination {
       display: flex;
@@ -108,7 +109,7 @@ $printers = $pdo->query("SELECT * FROM printer")->fetchAll(PDO::FETCH_ASSOC);
     }
 
     .btn-small {
-      padding: 6px 10px;
+      padding: 8px 10px;
     }
 
     .back-btn {
@@ -141,13 +142,17 @@ $printers = $pdo->query("SELECT * FROM printer")->fetchAll(PDO::FETCH_ASSOC);
 
     .printer-card label {
       font-weight: bold;
+	  display: inline-block;
+		width: 32%;
     }
 
     @media (max-width: 768px) {
       table {
         display: none;
       }
-
+	#search{
+		width:80%
+	}
       .form-controls {
         flex-direction: column;
         align-items: stretch;
@@ -165,6 +170,26 @@ $printers = $pdo->query("SELECT * FROM printer")->fetchAll(PDO::FETCH_ASSOC);
         display: flex;
       }
     }
+	/* Sorting styles */
+    th.sortable {
+      cursor: pointer;
+      position: relative;
+    }
+
+    th.sortable::after {
+      content: '';
+      position: absolute;
+      right: 8px;
+      font-size: 12px;
+    }
+
+    th.sortable.asc::after {
+      content: ' ▲';
+    }
+
+    th.sortable.desc::after {
+      content: ' ▼';
+    }
   </style>
 </head>
 <body>
@@ -173,7 +198,7 @@ $printers = $pdo->query("SELECT * FROM printer")->fetchAll(PDO::FETCH_ASSOC);
   <div class="form-controls">
     <a href="printer_add.php" class="btn">➕ Add New Printer</a>
     <div>
-      <label for="search">Search / Scan:</label>
+     
       <div style="display: flex; gap: 6px; align-items: center;">
         <input type="text" id="search" placeholder="Scan or search anything...">
         <button id="scanBtn" class="btn btn-small" type="button">📷 Scan</button>
@@ -198,17 +223,17 @@ $printers = $pdo->query("SELECT * FROM printer")->fetchAll(PDO::FETCH_ASSOC);
   <table id="pcTable">
     <thead>
       <tr>
-        <th>SN</th>
-        <th>Vendor</th>
-        <th>Invoice</th>
-        <th>Model</th>
-        <th>Serial</th>
-        <th>Correct Serial</th>
-        <th>Workstation</th>
-        <th>Username</th>
-        <th>Floor</th>
-        <th>User ID</th>
-        <th>Actions</th>
+        <th class="sortable">SN</th>
+        <th class="sortable">Vendor</th>
+        <th class="sortable">Invoice</th>
+        <th class="sortable">Model</th>
+        <th class="sortable">Serial</th>
+        <th class="sortable">Correct Serial</th>
+        <th class="sortable">Workstation</th>
+        <th class="sortable">Username</th>
+        <th class="sortable">Floor</th>
+        <th class="sortable">User ID</th>
+        <th class="sortable">Actions</th>
       </tr>
     </thead>
     <tbody id="tableBody">
@@ -258,41 +283,56 @@ $printers = $pdo->query("SELECT * FROM printer")->fetchAll(PDO::FETCH_ASSOC);
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  const table = document.getElementById('pcTable');
+  const tbody = document.getElementById('tableBody');
+  const allRows = Array.from(tbody.querySelectorAll('tr[data-row]')).map(row => row.cloneNode(true));
+  const pagination = document.getElementById('pagination');
   const searchInput = document.getElementById('search');
   const entriesSelect = document.getElementById('entries');
-  const pagination = document.getElementById('pagination');
-  const tableBody = document.getElementById('tableBody');
-  const cardContainer = document.getElementById('cardContainer');
-
-  const allTableRows = Array.from(tableBody.querySelectorAll('tr[data-row]')).map(row => row.cloneNode(true));
-  const allCards = Array.from(cardContainer.querySelectorAll('.printer-card')).map(card => card.cloneNode(true));
 
   let currentPage = 1;
   let rowsPerPage = parseInt(entriesSelect.value);
+  let currentSort = { index: null, direction: 'asc' };
 
-  function filterElements(elements) {
+  function filterRows() {
     const term = searchInput.value.toLowerCase();
-    return elements.filter(el =>
-      el.textContent.toLowerCase().includes(term)
+    return allRows.filter(row =>
+      Array.from(row.cells).some(cell =>
+        cell.textContent.toLowerCase().includes(term)
+      )
     );
   }
 
-  function renderUI() {
-    const screenIsMobile = window.innerWidth <= 768;
-    const elements = screenIsMobile ? allCards : allTableRows;
-    const filtered = filterElements(elements);
-    const start = (currentPage - 1) * rowsPerPage;
-    const pageItems = filtered.slice(start, start + rowsPerPage);
+  function sortRows(rows) {
+    const { index, direction } = currentSort;
+    if (index === null) return rows;
 
-    if (screenIsMobile) {
-      cardContainer.innerHTML = '';
-      pageItems.forEach(card => cardContainer.appendChild(card));
+    return rows.sort((a, b) => {
+      const valA = a.cells[index].textContent.trim().toLowerCase();
+      const valB = b.cells[index].textContent.trim().toLowerCase();
+      const numA = parseFloat(valA), numB = parseFloat(valB);
+      const isNumeric = !isNaN(numA) && !isNaN(numB);
+      let cmp = isNumeric ? numA - numB : valA.localeCompare(valB);
+      return direction === 'asc' ? cmp : -cmp;
+    });
+  }
+
+  function renderTable() {
+    const filtered = filterRows();
+    const sorted = sortRows(filtered);
+    const start = (currentPage - 1) * rowsPerPage;
+    const pageRows = sorted.slice(start, start + rowsPerPage);
+
+    tbody.innerHTML = '';
+    if (pageRows.length > 0) {
+      pageRows.forEach(row => tbody.appendChild(row));
     } else {
-      tableBody.innerHTML = '';
-      pageItems.forEach(row => tableBody.appendChild(row));
+      const noDataRow = document.createElement('tr');
+      noDataRow.innerHTML = `<td colspan="11" style="text-align:center; padding: 20px; color: #999;">No results found.</td>`;
+      tbody.appendChild(noDataRow);
     }
 
-    renderPagination(filtered.length);
+    renderPagination(sorted.length);
   }
 
   function renderPagination(total) {
@@ -306,7 +346,7 @@ document.addEventListener('DOMContentLoaded', function () {
       btn.className = (i === currentPage) ? 'active' : '';
       btn.addEventListener('click', () => {
         currentPage = i;
-        renderUI();
+        renderTable();
       });
       pagination.appendChild(btn);
     }
@@ -314,20 +354,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
   searchInput.addEventListener('input', () => {
     currentPage = 1;
-    renderUI();
+    renderTable();
   });
 
   entriesSelect.addEventListener('change', () => {
     rowsPerPage = parseInt(entriesSelect.value);
     currentPage = 1;
-    renderUI();
+    renderTable();
   });
 
-  window.addEventListener('resize', renderUI);
+  // Sort on header click
+  document.querySelectorAll('#pcTable thead th.sortable').forEach((th, index) => {
+    th.addEventListener('click', () => {
+      const isSame = currentSort.index === index;
+      currentSort.direction = isSame && currentSort.direction === 'asc' ? 'desc' : 'asc';
+      currentSort.index = index;
 
-  renderUI();
+      document.querySelectorAll('#pcTable thead th.sortable').forEach(h => h.classList.remove('asc', 'desc'));
+      th.classList.add(currentSort.direction);
 
-  // Barcode scanner logic
+      renderTable();
+    });
+  });
+
+  renderTable();
+
+  // Barcode scanner
   const scanBtn = document.getElementById('scanBtn');
   const qrReader = document.getElementById('qr-reader');
 
@@ -343,16 +395,18 @@ document.addEventListener('DOMContentLoaded', function () {
           scannedValue => {
             document.getElementById('search').value = scannedValue;
             currentPage = 1;
-            renderUI();
+            renderTable();
             html5QrCode.stop();
             qrReader.style.display = 'none';
           },
           error => {}
         ).catch(err => {
+          console.error("Camera start error:", err);
           alert("Could not start scanner. Please allow camera access.");
         });
       }
     }).catch(err => {
+      console.error("Camera access error:", err);
       alert("Camera not found or access denied.");
     });
   });
