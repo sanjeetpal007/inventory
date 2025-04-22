@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     .form-container {
-     # display: grid;
+      display: grid;
       grid-template-columns: 1fr;
       gap: 15px;
     }
@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .form-group {
       display: flex;
       flex-direction: column;
-	  margin:1%
+      margin: 1%;
     }
 
     label {
@@ -114,7 +114,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     input[type="text"],
-    input[type="checkbox"] {
+    input[type="checkbox"],
+    select {
       padding: 10px;
       border-radius: 8px;
       border: 1px solid #ccc;
@@ -161,7 +162,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       max-height: 150px;
       overflow-y: auto;
       background-color: white;
-      
       z-index: 9999;
       width: 100%;
       border-radius: 0 0 8px 8px;
@@ -215,13 +215,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'INVENTORY' => false,
         'WORKSTATION' => false,
         'USER_NAME' => false,
-        'FLOOR_NUMBER' => false,
       ];
 
       foreach ($fields as $field => $setting):
         $isReadonly = $setting === true;
         $class = $setting === 'half' ? 'is-half' : 'is-full';
-        $inputName = strtolower($field);
       ?>
         <div class="form-group <?= $class ?>">
           <label><?= str_replace("_", " ", $field) ?>:</label>
@@ -229,6 +227,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
       <?php endforeach; ?>
 
+      <!-- FLOOR_NUMBER Dropdown -->
+      <div class="form-group is-full">
+        <label for="FLOOR_NUMBER">Floor Number:</label>
+        <select name="FLOOR_NUMBER" id="FLOOR_NUMBER">
+          <?php
+          $floors = ['Ground', 'Lobby', '1st Floor', '2nd Floor', '3rd Floor', '4th Floor', '5th Floor', '6th Floor', '7th Floor'];
+          foreach ($floors as $floor) {
+            $selected = ($printer['FLOOR_NUMBER'] === $floor) ? 'selected' : '';
+            echo "<option value=\"$floor\" $selected>$floor</option>";
+          }
+          ?>
+        </select>
+      </div>
+
+      <!-- USER_ID field -->
       <div class="form-group is-full">
         <label for="USER_ID">User ID:</label>
         <input type="text" id="USER_ID" name="USER_ID" value="<?= htmlspecialchars($printer['USER_ID']) ?>">
