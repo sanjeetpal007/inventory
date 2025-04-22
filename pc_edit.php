@@ -1,6 +1,7 @@
 <?php
 include 'auth.php';
 include 'db.php';
+include('phpqrcode/qrlib.php');
 checkAuth(['admin', 'user']); // Allow both admin and user
 
 $id = $_GET['id'];
@@ -13,6 +14,31 @@ $userRoles = explode(',', $_SESSION['user']['roles'] ?? '');
 $isAdmin = in_array('admin', $userRoles);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+	
+	
+	
+	
+	// qr file saving in local storage
+	$id_qr = $_GET['id'];
+	$data = 'sanjeetpal.co.in';
+	//$filename = 'filename_'.$id_qr.$printer['PRINTER_SERIAL_NUMBER']; // sanitize filename
+    $filename = 'pc_'.$id_qr;
+	$outputDir='qrcodes_img/pc/';
+
+    if (!file_exists($outputDir)) {
+        mkdir($outputDir, 0777, true);
+    }
+    $qrFile = $outputDir . $filename . '.png';
+	//$qrFile = 'qrcodes_img/qrcode.png';
+	QRcode::png($data, $qrFile);
+	
+	
+	
+	
+	
+	
+	
+	
     $userId = $_POST['USER_ID'];
     if (empty($userId) || ($checkUserStmt = $pdo->prepare("SELECT 1 FROM emp_user WHERE EMP_ID = ?")) && $checkUserStmt->execute([$userId]) && $checkUserStmt->fetch()) {
         $oldData = json_encode([
@@ -261,7 +287,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="btn-group">
         <input type="submit" class="btn" value="Update PC">
         <a class="btn btn-small" href="user_devices.php?user_id=<?= $pc['USER_ID'] ?>">User Devices</a>
+		
+		<?php
+		$id_qr = $_GET['id'];
+		$filename = 'pc_'.$id_qr;
+		$outputDir='qrcodes_img/pc/';
+
+    
+		$qrFile = 'qrcodes_img/pc/' . $filename . '.png';
+		//$imagePath = 'qrcodes_img/printer/filename_.png'; // change this path as needed
+		?>
+		
+		<a class=" btn" onclick="printImage_PC()">Print QR Code</a>
+		<iframe id="printFrame" src="" style="display: none;"></iframe>
+		<script>
+			function printImage_PC() {
+				const imageURL = '<?php echo $qrFile; ?>';
+				const printFrame = document.getElementById('printFrame');
+				const serial_num = '<?php echo $pc['PC_SERIAL_NUMBER']; ?>';
+				const doc = printFrame.contentWindow.document;
+				doc.open();
+				doc.write('<html><head><title>Print</title></head><body onload="window.print();window.close();" style="display:flex;">');
+				doc.write('<img src="' + imageURL + '" style="width: 50%; height: 40%;">');
+				doc.write('<h2 style="margin-top: 5%;width: 40%;font-size: 150%; margin-top: 10%;">'+ serial_num +'</h2></body></html>');
+				doc.close();
+			}
+		</script>
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
       </div>
+	
     </form>
     <br>
     <a href="pc_log.php?id=<?= $id ?>">🔍 View Edit History</a>

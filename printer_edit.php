@@ -1,6 +1,7 @@
 <?php
 include 'auth.php';
 include 'db.php';
+include('phpqrcode/qrlib.php');
 checkAuth(['admin', 'user']);
 
 $id = $_GET['id'];
@@ -13,6 +14,32 @@ $userRoles = explode(',', $_SESSION['user']['roles'] ?? '');
 $isAdmin = in_array('admin', $userRoles);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+	
+	
+	
+	
+	
+	
+	// qr file saving in local storage
+	$id_qr = $_GET['id'];
+	$data = 'sanjeetpal.co.in';
+	//$filename = 'filename_'.$id_qr.$printer['PRINTER_SERIAL_NUMBER']; // sanitize filename
+    $filename = 'printer_'.$id_qr;
+	$outputDir='qrcodes_img/printer/';
+
+    if (!file_exists($outputDir)) {
+        mkdir($outputDir, 0777, true);
+    }
+    $qrFile = $outputDir . $filename . '.png';
+	//$qrFile = 'qrcodes_img/qrcode.png';
+	QRcode::png($data, $qrFile);
+	
+	
+	
+	
+	
+	
+	
     $userId = $_POST['USER_ID'];
     if (empty($userId) || ($checkUserStmt = $pdo->prepare("SELECT 1 FROM emp_user WHERE EMP_ID = ?")) && $checkUserStmt->execute([$userId]) && $checkUserStmt->fetch()) {
 
@@ -139,7 +166,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      justify-content: center;
       grid-column: span 2;
     }
 
@@ -177,6 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     @media screen and (min-width: 768px) {
+		
       .form-container {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -189,6 +216,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         grid-column: span 2;
       }
     }
+	@media screen and (max-width: 768px) {
+		.form-container {
+			display:unset;
+		}
+		
+	}
+	
   </style>
 </head>
 <body>
@@ -256,6 +290,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="btn-group">
         <input type="submit" class="btn" value="Update Printer">
         <a class="btn" href="user_devices.php?user_id=<?= $printer['USER_ID'] ?>">User Devices</a>
+		
+		
+		
+		
+		<?php
+		$id_qr = $_GET['id'];
+		$filename = 'printer_'.$id_qr;
+		$outputDir='qrcodes_img/printer/';
+
+    
+		$qrFile = 'qrcodes_img/printer/' . $filename . '.png';
+		//$imagePath = 'qrcodes_img/printer/filename_.png'; // change this path as needed
+		?>
+		
+		<a class=" btn" onclick="printImage()">Print QR Code</a>
+		<iframe id="printFrame" src="" style="display: none;"></iframe>
+		<script>
+			function printImage() {
+				const imageURL = '<?php echo $qrFile; ?>';
+				const printFrame = document.getElementById('printFrame');
+				const serial_num = '<?php echo $printer['PRINTER_SERIAL_NUMBER']; ?>';
+				const doc = printFrame.contentWindow.document;
+				doc.open();
+				doc.write('<html><head><title>Print</title></head><body onload="window.print();window.close();" style="display:flex;">');
+				doc.write('<img src="' + imageURL + '" style="width: 50%; height: 40%;">');
+				doc.write('<h2 style="margin-top: 5%;width: 40%;font-size: 150%; margin-top: 10%;">'+ serial_num +'</h2></body></html>');
+				doc.close();
+			}
+		</script>
+		
+		
+		
+		
+		
+		
+		
+		
+
       </div>
     </div>
   </form>
@@ -292,6 +364,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   });
 });
+
 </script>
 
 </body>

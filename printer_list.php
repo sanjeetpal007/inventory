@@ -285,7 +285,9 @@ $printers = $pdo->query("SELECT * FROM printer")->fetchAll(PDO::FETCH_ASSOC);
 document.addEventListener('DOMContentLoaded', function () {
   const table = document.getElementById('pcTable');
   const tbody = document.getElementById('tableBody');
+  const cardContainer = document.getElementById('cardContainer');
   const allRows = Array.from(tbody.querySelectorAll('tr[data-row]')).map(row => row.cloneNode(true));
+  const allCards = Array.from(cardContainer.querySelectorAll('.printer-card')).map(card => card.cloneNode(true));
   const pagination = document.getElementById('pagination');
   const searchInput = document.getElementById('search');
   const entriesSelect = document.getElementById('entries');
@@ -294,13 +296,17 @@ document.addEventListener('DOMContentLoaded', function () {
   let rowsPerPage = parseInt(entriesSelect.value);
   let currentSort = { index: null, direction: 'asc' };
 
-  function filterRows() {
-    const term = searchInput.value.toLowerCase();
-    return allRows.filter(row =>
-      Array.from(row.cells).some(cell =>
-        cell.textContent.toLowerCase().includes(term)
+  function filterContent(term) {
+    return {
+      rows: allRows.filter(row =>
+        Array.from(row.cells).some(cell =>
+          cell.textContent.toLowerCase().includes(term)
+        )
+      ),
+      cards: allCards.filter(card =>
+        card.textContent.toLowerCase().includes(term)
       )
-    );
+    };
   }
 
   function sortRows(rows) {
@@ -318,21 +324,27 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderTable() {
-    const filtered = filterRows();
-    const sorted = sortRows(filtered);
-    const start = (currentPage - 1) * rowsPerPage;
-    const pageRows = sorted.slice(start, start + rowsPerPage);
+    const term = searchInput.value.toLowerCase();
+    const { rows: filteredRows, cards: filteredCards } = filterContent(term);
 
+    const sortedRows = sortRows(filteredRows);
+    const pageRows = sortedRows.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
     tbody.innerHTML = '';
     if (pageRows.length > 0) {
       pageRows.forEach(row => tbody.appendChild(row));
     } else {
-      const noDataRow = document.createElement('tr');
-      noDataRow.innerHTML = `<td colspan="11" style="text-align:center; padding: 20px; color: #999;">No results found.</td>`;
-      tbody.appendChild(noDataRow);
+      tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 20px; color: #999;">No results found.</td></tr>`;
     }
 
-    renderPagination(sorted.length);
+    const pageCards = filteredCards.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+    cardContainer.innerHTML = '';
+    if (pageCards.length > 0) {
+      pageCards.forEach(card => cardContainer.appendChild(card));
+    } else {
+      cardContainer.innerHTML = `<div style="text-align:center; padding: 20px; color: #999;">No results found.</div>`;
+    }
+
+    renderPagination(filteredRows.length);
   }
 
   function renderPagination(total) {
@@ -363,7 +375,6 @@ document.addEventListener('DOMContentLoaded', function () {
     renderTable();
   });
 
-  // Sort on header click
   document.querySelectorAll('#pcTable thead th.sortable').forEach((th, index) => {
     th.addEventListener('click', () => {
       const isSame = currentSort.index === index;
@@ -412,6 +423,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
+
 
 </body>
 </html>

@@ -10,6 +10,7 @@ $data = 'https://www.example.com';  // You can replace this with any data or URL
 
 // Generate the QR code and save it as a PNG file
 QRcode::png($data, $qrFile);
+
 ?>
 
 <!DOCTYPE html>
@@ -76,4 +77,103 @@ QRcode::png($data, $qrFile);
     </script>
 
 </body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<?php
+$imagePath = 'qrcodes_img/qrcode.png'; // change this path as needed
+?>
+
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Print QR Image</title>
+</head>
+<body style="text-align: center; font-family: Arial; margin-top: 50px;">
+
+    <h2>Print QR Code</h2>
+    <button onclick="printImage()">Print QR Code</button>
+
+    <iframe id="printFrame" src="" style="display: none;"></iframe>
+
+    <script>
+        function printImage() {
+            const imageURL = '<?php echo $imagePath; ?>';
+            const printFrame = document.getElementById('printFrame');
+
+            const doc = printFrame.contentWindow.document;
+            doc.open();
+            doc.write('<html><head><title>Print</title></head><body onload="window.print();window.close();" style="display:flex;">');
+            doc.write('<img src="' + imageURL + '" style="width: 50%; height: 40%;">');
+            doc.write('<h2 style="margin-top: 5%;width: 40%;font-size: 150%; margin-top: 10%;">SERIAL NUMBER</h2></body></html>');
+            doc.close();
+        }
+    </script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </html>

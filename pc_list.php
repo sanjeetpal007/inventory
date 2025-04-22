@@ -5,7 +5,6 @@ checkAuth();
 
 $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,6 +13,7 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
+    /* Your existing styles remain mostly the same */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -74,6 +74,7 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
       justify-content: flex-end;
       gap: 5px;
       margin-top: 15px;
+      flex-wrap: wrap;
     }
 
     .pagination button {
@@ -140,37 +141,29 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
 
     .pc-card label {
       font-weight: bold;
-	  display: inline-block;
-		width: 32%;
+      display: inline-block;
+      width: 32%;
     }
 
     @media (max-width: 768px) {
       table {
         display: none;
       }
-	  #search{
-		width:80%
-	}
-
+      #search {
+        width: 80%;
+      }
       .form-controls {
         flex-direction: column;
         align-items: stretch;
       }
-
-      .pagination {
-        justify-content: center;
-      }
-
       .back-btn {
         justify-content: center;
       }
-
       .pc-card {
         display: flex;
       }
     }
 
-    /* Sorting styles */
     th.sortable {
       cursor: pointer;
       position: relative;
@@ -198,7 +191,6 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
   <div class="form-controls">
     <a href="pc_add.php" class="btn">➕ Add New PC</a>
     <div>
-      
       <div style="display: flex; gap: 6px; align-items: center;">
         <input type="text" id="search" placeholder="Scan or search anything...">
         <button id="scanBtn" class="btn btn-small" type="button">📷 Scan</button>
@@ -208,7 +200,7 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
       <label for="entries">Show</label>
       <select id="entries">
         <option value="5" selected>5</option>
-        <option value="10" >10</option>
+        <option value="10">10</option>
         <option value="25">25</option>
         <option value="50">50</option>
       </select>
@@ -249,9 +241,7 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
           <td><?= htmlspecialchars($pc['USERNAME']) ?></td>
           <td><?= htmlspecialchars($pc['FLOOR_NUMBER']) ?></td>
           <td><?= htmlspecialchars($pc['USER_ID']) ?></td>
-          <td>
-            <a class="btn btn-small" href="pc_edit.php?id=<?= $pc['id'] ?>">Edit</a>
-          </td>
+          <td><a class="btn btn-small" href="pc_edit.php?id=<?= $pc['id'] ?>">Edit</a></td>
         </tr>
       <?php endforeach; ?>
     </tbody>
@@ -284,23 +274,22 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  const table = document.getElementById('pcTable');
-  const tbody = document.getElementById('tableBody');
-  const allRows = Array.from(tbody.querySelectorAll('tr[data-row]')).map(row => row.cloneNode(true));
-  const pagination = document.getElementById('pagination');
+  const tableBody = document.getElementById('tableBody');
+  const allRows = Array.from(tableBody.querySelectorAll('tr[data-row]')).map(row => row.cloneNode(true));
+  const cardContainer = document.getElementById('cardContainer');
+  const allCards = Array.from(cardContainer.querySelectorAll('.pc-card')).map(card => card.cloneNode(true));
   const searchInput = document.getElementById('search');
   const entriesSelect = document.getElementById('entries');
+  const pagination = document.getElementById('pagination');
 
   let currentPage = 1;
   let rowsPerPage = parseInt(entriesSelect.value);
   let currentSort = { index: null, direction: 'asc' };
 
-  function filterRows() {
+  function getFiltered(rowsOrCards) {
     const term = searchInput.value.toLowerCase();
-    return allRows.filter(row =>
-      Array.from(row.cells).some(cell =>
-        cell.textContent.toLowerCase().includes(term)
-      )
+    return rowsOrCards.filter(el =>
+      el.textContent.toLowerCase().includes(term)
     );
   }
 
@@ -318,69 +307,69 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  function renderTable() {
-    const filtered = filterRows();
-    const sorted = sortRows(filtered);
+  function renderTableAndCards() {
+    const filteredRows = getFiltered(allRows);
+    const sortedRows = sortRows(filteredRows);
     const start = (currentPage - 1) * rowsPerPage;
-    const pageRows = sorted.slice(start, start + rowsPerPage);
+    const paginatedRows = sortedRows.slice(start, start + rowsPerPage);
 
-    tbody.innerHTML = '';
-    if (pageRows.length > 0) {
-      pageRows.forEach(row => tbody.appendChild(row));
+    tableBody.innerHTML = '';
+    if (paginatedRows.length) {
+      paginatedRows.forEach(row => tableBody.appendChild(row));
     } else {
-      const noDataRow = document.createElement('tr');
-      noDataRow.innerHTML = `<td colspan="11" style="text-align:center; padding: 20px; color: #999;">No results found.</td>`;
-      tbody.appendChild(noDataRow);
+      tableBody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 20px; color: #999;">No results found.</td></tr>`;
     }
 
-    renderPagination(sorted.length);
+    // Cards (mobile)
+    const filteredCards = getFiltered(allCards);
+    const paginatedCards = filteredCards.slice(start, start + rowsPerPage);
+    cardContainer.innerHTML = '';
+    paginatedCards.forEach(card => cardContainer.appendChild(card));
+
+    renderPagination(Math.ceil(filteredRows.length / rowsPerPage));
   }
 
-  function renderPagination(total) {
-    const pageCount = Math.ceil(total / rowsPerPage);
+  function renderPagination(totalPages) {
     pagination.innerHTML = '';
-    if (pageCount <= 1) return;
+    if (totalPages <= 1) return;
 
-    for (let i = 1; i <= pageCount; i++) {
+    for (let i = 1; i <= totalPages; i++) {
       const btn = document.createElement('button');
       btn.textContent = i;
       btn.className = (i === currentPage) ? 'active' : '';
-      btn.addEventListener('click', () => {
+      btn.onclick = () => {
         currentPage = i;
-        renderTable();
-      });
+        renderTableAndCards();
+      };
       pagination.appendChild(btn);
     }
   }
 
   searchInput.addEventListener('input', () => {
     currentPage = 1;
-    renderTable();
+    renderTableAndCards();
   });
 
   entriesSelect.addEventListener('change', () => {
     rowsPerPage = parseInt(entriesSelect.value);
     currentPage = 1;
-    renderTable();
+    renderTableAndCards();
   });
 
-  // Sort on header click
   document.querySelectorAll('#pcTable thead th.sortable').forEach((th, index) => {
     th.addEventListener('click', () => {
       const isSame = currentSort.index === index;
       currentSort.direction = isSame && currentSort.direction === 'asc' ? 'desc' : 'asc';
       currentSort.index = index;
-
       document.querySelectorAll('#pcTable thead th.sortable').forEach(h => h.classList.remove('asc', 'desc'));
       th.classList.add(currentSort.direction);
-
-      renderTable();
+      renderTableAndCards();
     });
   });
 
-  renderTable();
+  renderTableAndCards();
 
-  // Barcode scanner
+  // Barcode Scanner
   const scanBtn = document.getElementById('scanBtn');
   const qrReader = document.getElementById('qr-reader');
 
@@ -389,30 +378,22 @@ document.addEventListener('DOMContentLoaded', function () {
     const html5QrCode = new Html5Qrcode("qr-reader");
 
     Html5Qrcode.getCameras().then(devices => {
-      if (devices && devices.length) {
+      if (devices.length) {
         html5QrCode.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: 250 },
           scannedValue => {
-            document.getElementById('search').value = scannedValue;
+            searchInput.value = scannedValue;
             currentPage = 1;
-            renderTable();
+            renderTableAndCards();
             html5QrCode.stop();
             qrReader.style.display = 'none';
-          },
-          error => {}
-        ).catch(err => {
-          console.error("Camera start error:", err);
-          alert("Could not start scanner. Please allow camera access.");
-        });
+          }
+        ).catch(err => alert("Failed to start camera"));
       }
-    }).catch(err => {
-      console.error("Camera access error:", err);
-      alert("Camera not found or access denied.");
-    });
+    }).catch(() => alert("Camera access denied"));
   });
 });
 </script>
-
 </body>
 </html>
