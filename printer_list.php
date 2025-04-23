@@ -1,9 +1,98 @@
 <?php
 include 'auth.php';
 include 'db.php';
+
+
+require 'autoload.php';
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 checkAuth();
 
 $printers = $pdo->query("SELECT * FROM printer")->fetchAll(PDO::FETCH_ASSOC);
+
+/**
+
+
+$spreadsheet = new Spreadsheet();
+$sheet = $spreadsheet->getActiveSheet();
+$sheet->setCellValue('A1', 'Export working!');
+
+$writer = new Xlsx($spreadsheet);
+$writer->save('test.xlsx');
+
+echo "Excel file created.";
+
+
+
+
+
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $table = 'printer';
+    $stmt = $pdo->query("SELECT * FROM `$table`");
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+
+    if (count($rows) > 0) {
+        // Add headers
+        $headers = array_keys($rows[0]);
+        $sheet->fromArray([$headers], NULL, 'A1');
+
+        // Add rows
+        $sheet->fromArray($rows, NULL, 'A2');
+    }
+
+    // Set headers for download
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header("Content-Disposition: attachment; filename=\"$table.xlsx\"");
+    header('Cache-Control: max-age=0');
+
+    // Write to output
+    $writer = new Xlsx($spreadsheet);
+    $writer->save('php://output');
+    exit;
+}
+**/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ?>
 
 <!DOCTYPE html>
@@ -204,6 +293,34 @@ $printers = $pdo->query("SELECT * FROM printer")->fetchAll(PDO::FETCH_ASSOC);
         <button id="scanBtn" class="btn btn-small" type="button">📷 Scan</button>
       </div>
     </div>
+	<div>
+		<form action="printer_list.php" method="post">
+			<button type="submit">Export to Excel</button>
+		</form>
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
     <div>
       <label for="entries">Show</label>
       <select id="entries">
