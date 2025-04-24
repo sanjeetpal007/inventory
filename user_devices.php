@@ -91,7 +91,7 @@ $printers = $printer_stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="card-container">
             <?php foreach ($pcs as $pc): ?>
                 <div class="card">
-                    <div class="card-item"><strong>ID:</strong> <?= htmlspecialchars($pc['id']) ?></div>
+                    <div class="card-item"><strong>ID:</strong> <?= htmlspecialchars($pc['ID']) ?></div>
                     <div class="card-item"><strong>SN:</strong> <?= htmlspecialchars($pc['SN']) ?></div>
                     <div class="card-item"><strong>Model:</strong> <?= htmlspecialchars($pc['DESKTOP_PC_MODEL']) ?></div>
                     <div class="card-item"><strong>Serial Number:</strong> <?= htmlspecialchars($pc['CORRECT_SERIAL_NUMBER']) ?></div>
@@ -110,7 +110,7 @@ $printers = $printer_stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="card-container">
             <?php foreach ($printers as $printer): ?>
                 <div class="card">
-                    <div class="card-item"><strong>ID:</strong> <?= htmlspecialchars($printer['id']) ?></div>
+                    <div class="card-item"><strong>ID:</strong> <?= htmlspecialchars($printer['ID']) ?></div>
                     <div class="card-item"><strong>SN:</strong> <?= htmlspecialchars($printer['SN']) ?></div>
                     <div class="card-item"><strong>Model:</strong> <?= htmlspecialchars($printer['PRINTER_MODEL']) ?></div>
                     <div class="card-item"><strong>Serial Number:</strong> <?= htmlspecialchars($printer['CORRECT_SERIAL_NUMBER']) ?></div>

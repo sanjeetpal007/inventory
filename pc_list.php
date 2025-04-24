@@ -199,8 +199,8 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
     <div>
       <label for="entries">Show</label>
       <select id="entries">
-        <option value="5" selected>5</option>
-        <option value="10">10</option>
+        <option value="5" >5</option>
+        <option value="10"selected>10</option>
         <option value="25">25</option>
         <option value="50">50</option>
       </select>
@@ -241,7 +241,7 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
           <td><?= htmlspecialchars($pc['USERNAME']) ?></td>
           <td><?= htmlspecialchars($pc['FLOOR_NUMBER']) ?></td>
           <td><?= htmlspecialchars($pc['USER_ID']) ?></td>
-          <td><a class="btn btn-small" href="pc_edit.php?id=<?= $pc['id'] ?>">Edit</a></td>
+          <td><a class="btn btn-small" href="pc_edit.php?id=<?= $pc['ID'] ?>">Edit</a></td>
         </tr>
       <?php endforeach; ?>
     </tbody>
@@ -269,10 +269,14 @@ $pcs = $pdo->query("SELECT * FROM pc")->fetchAll(PDO::FETCH_ASSOC);
 
   <div class="back-btn">
     <a href="dashboard.php" class="btn">⬅️ Back to Dashboard</a>
+	<a class="btn"onclick="downloadCSV()" style="margin-left: 10px;">Download CSV</a>
   </div>
 </div>
 
 <script>
+function downloadCSV() {
+  window.location.href = 'export_all_pc.php';
+}
 document.addEventListener('DOMContentLoaded', function () {
   const tableBody = document.getElementById('tableBody');
   const allRows = Array.from(tableBody.querySelectorAll('tr[data-row]')).map(row => row.cloneNode(true));
@@ -329,21 +333,66 @@ document.addEventListener('DOMContentLoaded', function () {
     renderPagination(Math.ceil(filteredRows.length / rowsPerPage));
   }
 
-  function renderPagination(totalPages) {
-    pagination.innerHTML = '';
-    if (totalPages <= 1) return;
+function renderPagination(totalPages) {
+  pagination.innerHTML = '';
+  if (totalPages <= 1) return;
 
-    for (let i = 1; i <= totalPages; i++) {
-      const btn = document.createElement('button');
-      btn.textContent = i;
-      btn.className = (i === currentPage) ? 'active' : '';
-      btn.onclick = () => {
-        currentPage = i;
-        renderTableAndCards();
-      };
-      pagination.appendChild(btn);
-    }
+  const before = 3;
+  const after = 4;
+  const startPage = Math.max(2, currentPage - before); // start from 2 to avoid duplicate first page
+  const endPage = Math.min(totalPages - 1, currentPage + after); // end at totalPages - 1 to avoid duplicate last page
+
+  // First Page
+  const firstBtn = document.createElement('button');
+  firstBtn.textContent = '1';
+  firstBtn.className = (currentPage === 1) ? 'active' : '';
+  firstBtn.onclick = () => {
+    currentPage = 1;
+    renderTableAndCards();
+  };
+  pagination.appendChild(firstBtn);
+
+  // Dots after first page if needed
+  if (startPage > 2) {
+    const dots = document.createElement('span');
+    dots.textContent = '...';
+    dots.style.padding = '8px';
+    pagination.appendChild(dots);
   }
+
+  // Page range
+  for (let i = startPage; i <= endPage; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    btn.className = (i === currentPage) ? 'active' : '';
+    btn.onclick = () => {
+      currentPage = i;
+      renderTableAndCards();
+    };
+    pagination.appendChild(btn);
+  }
+
+  // Dots before last page if needed
+  if (endPage < totalPages - 1) {
+    const dots = document.createElement('span');
+    dots.textContent = '...';
+    dots.style.padding = '8px';
+    pagination.appendChild(dots);
+  }
+
+  // Last Page
+  const lastBtn = document.createElement('button');
+  lastBtn.textContent = totalPages;
+  lastBtn.className = (currentPage === totalPages) ? 'active' : '';
+  lastBtn.onclick = () => {
+    currentPage = totalPages;
+    renderTableAndCards();
+  };
+  pagination.appendChild(lastBtn);
+}
+
+
+
 
   searchInput.addEventListener('input', () => {
     currentPage = 1;

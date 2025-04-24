@@ -282,7 +282,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <label for="FLOOR_NUMBER">Floor Number:</label>
         <select name="FLOOR_NUMBER" id="FLOOR_NUMBER">
           <?php
-          $floors = ['Ground', 'Lobby', '1st Floor', '2nd Floor', '3rd Floor', '4th Floor', '5th Floor', '6th Floor', '7th Floor'];
+          $floors = ['NA','Ground', 'Lobby', '1st Floor', '2nd Floor', '3rd Floor', '4th Floor', '5th Floor', '6th Floor', '7th Floor'];
           foreach ($floors as $floor) {
             $selected = ($printer['FLOOR_NUMBER'] === $floor) ? 'selected' : '';
             echo "<option value=\"$floor\" $selected>$floor</option>";
@@ -308,9 +308,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <a class="btn" href="user_devices.php?user_id=<?= $printer['USER_ID'] ?>">User Devices</a>
 		
 		
-		<!-- qr printering code start here -->
+<!-- qr printering code start here -->
 		
-		<!-- firts try
+		<!-- first try
 		<?php
 		//$id_qr = $_GET['id'];
 		//$filename = 'printer_'.$id_qr;
@@ -341,7 +341,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		$filename='printer_'.$id_qr;
 		$qrCodePath = 'qrcodes_img/printer/' . $filename . '.png'; // Path to the QR code image
 		$logoPath = 'qrcodes_img/logo.png'; // Path to the company logo
-		$employeeId = $printer['USER_ID'];
+		$employeeId = $printer['USER_ID'].'('.$printer['ID'].')';
 		/* $stmt = $pdo->prepare("SELECT EMP_NAME FROM emp_user WHERE EMP_ID = ?");
 		$stmt->execute([$employeeId]);
 		$empinfo = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -419,7 +419,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				}
 			</style>
 		</head>
-		<div id="qr_body">
+		<div id="qr_body" style="display: inherit;">
 
 			<!--<h2>Print QR Code</h2>-->
 			<div class="container_qr" id="printArea">

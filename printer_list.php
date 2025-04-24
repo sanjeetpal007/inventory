@@ -293,11 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button id="scanBtn" class="btn btn-small" type="button">📷 Scan</button>
       </div>
     </div>
-	<div>
-		<form action="printer_list.php" method="post">
-			<button type="submit">Export to Excel</button>
-		</form>
-	</div>
+	
 	
 	
 	
@@ -324,8 +320,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div>
       <label for="entries">Show</label>
       <select id="entries">
-        <option value="5" selected>5</option>
-        <option value="10">10</option>
+        <option value="5" >5</option>
+        <option value="10" selected>10</option>
         <option value="25">25</option>
         <option value="50">50</option>
       </select>
@@ -366,7 +362,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <td><?= htmlspecialchars($printer['USER_NAME']) ?></td>
           <td><?= htmlspecialchars($printer['FLOOR_NUMBER']) ?></td>
           <td><?= htmlspecialchars($printer['USER_ID']) ?></td>
-          <td><a class="btn btn-small" href="printer_edit.php?id=<?= $printer['id'] ?>">Edit</a></td>
+          <td><a class="btn btn-small" href="printer_edit.php?id=<?= $printer['ID'] ?>">Edit</a></td>
         </tr>
       <?php endforeach; ?>
     </tbody>
@@ -395,10 +391,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <div class="back-btn">
     <a href="dashboard.php" class="btn">⬅️ Back to Dashboard</a>
+	<a class="btn"onclick="downloadCSV()" style="margin-left: 10px;">Download CSV</a>
   </div>
 </div>
 
 <script>
+function downloadCSV() {
+  window.location.href = 'export_all_printer.php';
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   const table = document.getElementById('pcTable');
   const tbody = document.getElementById('tableBody');
@@ -464,22 +465,61 @@ document.addEventListener('DOMContentLoaded', function () {
     renderPagination(filteredRows.length);
   }
 
-  function renderPagination(total) {
-    const pageCount = Math.ceil(total / rowsPerPage);
-    pagination.innerHTML = '';
-    if (pageCount <= 1) return;
+function renderPagination(total) {
+  const pageCount = Math.ceil(total / rowsPerPage);
+  pagination.innerHTML = '';
+  if (pageCount <= 1) return;
 
-    for (let i = 1; i <= pageCount; i++) {
-      const btn = document.createElement('button');
-      btn.textContent = i;
-      btn.className = (i === currentPage) ? 'active' : '';
-      btn.addEventListener('click', () => {
-        currentPage = i;
-        renderTable();
-      });
-      pagination.appendChild(btn);
-    }
+  const pageButtons = [];
+
+  const addPageButton = (i) => {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    btn.className = (i === currentPage) ? 'active' : '';
+    btn.addEventListener('click', () => {
+      currentPage = i;
+      renderTable();
+    });
+    pageButtons.push(btn);
+  };
+
+  // Always show first page
+  addPageButton(1);
+
+  // Determine range
+  let start = Math.max(2, currentPage - 3);
+  let end = Math.min(pageCount - 1, currentPage + 4);
+
+  if (start > 2) {
+    const dots = document.createElement('span');
+    dots.textContent = '...';
+    pageButtons.push(dots);
   }
+
+  for (let i = start; i <= end; i++) {
+    addPageButton(i);
+  }
+
+  if (end < pageCount - 1) {
+    const dots = document.createElement('span');
+    dots.textContent = '...';
+    pageButtons.push(dots);
+  }
+
+  // Always show last page
+  if (pageCount > 1) {
+    addPageButton(pageCount);
+  }
+
+  // Append all to DOM
+  pageButtons.forEach(btn => pagination.appendChild(btn));
+}
+
+
+
+
+
+
 
   searchInput.addEventListener('input', () => {
     currentPage = 1;
