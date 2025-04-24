@@ -167,6 +167,40 @@ $imagePath = 'qrcodes_img/qrcode.png'; // change this path as needed
 
 
 
+<?php
+// Include the Barcode Generator library
+require_once 'vendor/autoload.php';
+
+use Picqer\Barcode\BarcodeGeneratorPNG;
+
+// Define the path where the barcode will be saved
+$barcodeFile = 'barcodes_img/barcode.png';
+
+// Define the data to be encoded in the barcode
+$data = '123456789012';  // You can replace this with any numeric or alphanumeric string
+
+// Create a new instance of the Barcode Generator
+$generator = new BarcodeGeneratorPNG();
+
+// Generate the barcode and save it as a PNG file
+file_put_contents($barcodeFile, $generator->getBarcode($data, $generator::TYPE_CODE_128));
+
+// Optionally, you can display the generated barcode as an image
+echo '<img src="' . $barcodeFile . '" alt="Barcode" />';
+?>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

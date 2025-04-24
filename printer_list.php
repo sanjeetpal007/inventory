@@ -3,7 +3,7 @@ include 'auth.php';
 include 'db.php';
 
 
-require 'autoload.php';
+require 'vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;

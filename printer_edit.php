@@ -2,6 +2,11 @@
 include 'auth.php';
 include 'db.php';
 include('phpqrcode/qrlib.php');
+
+
+
+
+
 checkAuth(['admin', 'user']);
 
 $id = $_GET['id'];
@@ -32,9 +37,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $qrFile = $outputDir . $filename . '.png';
 	//$qrFile = 'qrcodes_img/qrcode.png';
-	QRcode::png($data, $qrFile);
+	// QR Code parameters
+	$matrixPointSize = 5.75; // Size of each module (1-10), adjust this to get approx. 120x120
+	$margin = 0;           // White border
+
+	QRcode::png($data, $qrFile, QR_ECLEVEL_L, $matrixPointSize, $margin);
 	
+	//QRcode::png($data, $qrFile);
 	
+	// Optional: Resize to exact 120x120 using GD (if the QR output is slightly off)
+	//$image = imagecreatefrompng($qrFile);
+	//$resized = imagescale($image, 120, 120);
+	//imagepng($resized, $qrFile); // Overwrite original
+	//imagedestroy($image);
+	//imagedestroy($resized);
 	
 	
 	
@@ -292,15 +308,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <a class="btn" href="user_devices.php?user_id=<?= $printer['USER_ID'] ?>">User Devices</a>
 		
 		
+		<!-- qr printering code start here -->
 		
-		
+		<!-- firts try
 		<?php
-		$id_qr = $_GET['id'];
-		$filename = 'printer_'.$id_qr;
-		$outputDir='qrcodes_img/printer/';
+		//$id_qr = $_GET['id'];
+		//$filename = 'printer_'.$id_qr;
+		//$outputDir='qrcodes_img/printer/';
 
     
-		$qrFile = 'qrcodes_img/printer/' . $filename . '.png';
+		//$qrFile = 'qrcodes_img/printer/' . $filename . '.png';
 		//$imagePath = 'qrcodes_img/printer/filename_.png'; // change this path as needed
 		?>
 		
@@ -308,9 +325,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		<iframe id="printFrame" src="" style="display: none;"></iframe>
 		<script>
 			function printImage() {
-				const imageURL = '<?php echo $qrFile; ?>';
+				const imageURL = '<?php //echo $qrFile; ?>';
 				const printFrame = document.getElementById('printFrame');
-				const serial_num = '<?php echo $printer['PRINTER_SERIAL_NUMBER']; ?>';
+				const serial_num = '<?php //echo $printer['PRINTER_SERIAL_NUMBER']; ?>';
 				const doc = printFrame.contentWindow.document;
 				doc.open();
 				doc.write('<html><head><title>Print</title></head><body onload="window.print();window.close();" style="display:flex;">');
@@ -318,14 +335,193 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				doc.write('<h2 style="margin-top: 5%;width: 40%;font-size: 150%; margin-top: 10%;">'+ serial_num +'</h2></body></html>');
 				doc.close();
 			}
+		</script> -->
+		<?php
+		$id_qr=$_GET['id'];
+		$filename='printer_'.$id_qr;
+		$qrCodePath = 'qrcodes_img/printer/' . $filename . '.png'; // Path to the QR code image
+		$logoPath = 'qrcodes_img/logo.png'; // Path to the company logo
+		$employeeId = $printer['USER_ID'];
+		/* $stmt = $pdo->prepare("SELECT EMP_NAME FROM emp_user WHERE EMP_ID = ?");
+		$stmt->execute([$employeeId]);
+		$empinfo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+		if ($empinfo) {
+			$employeeName = $empinfo['EMP_NAME'];
+		} else {
+			$employeeName = 'Unknown';
+		}*/
+
+		
+		
+		//$empinfo = $pdo->query("SELECT 1 FROM emp_user WHERE EMP_ID = ".$employeeId)->fetchAll(PDO::FETCH_ASSOC);
+		
+		
+		$employeeName = $printer['USER_NAME'];
+		?>
+
+		<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<title>Print QR Code Layout</title>
+			<style>
+				#qr_div {
+					font-family: Arial, sans-serif;
+					text-align: center;
+					margin-top: 40px;
+				}
+
+				.container_qr {
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					border: 1px solid #ccc;
+					padding: 10px;
+					margin: 0 auto;
+					width: 3.5in;
+					height: 1.4in;
+					box-sizing: border-box;
+					display:none;
+				}
+
+				.left, .right {
+					flex: 1;
+					text-align: center;
+				}
+
+				.left img {
+					max-width: 100%;
+					max-height: 100%;
+				}
+
+				.right .label {
+					font-weight: bold;
+					margin-bottom: 5px;
+				}
+
+				.right img {
+					max-width: 80px;
+					height: auto;
+					margin-bottom: 5px;
+				}
+
+				.right .id {
+					font-weight: bold;
+					margin-bottom: 3px;
+				}
+
+				a #button_qr{
+					margin-top: 20px;
+					padding: 10px 20px;
+					font-size: 1em;
+					cursor: pointer;
+				}
+			</style>
+		</head>
+		<div id="qr_body">
+
+			<!--<h2>Print QR Code</h2>-->
+			<div class="container_qr" id="printArea">
+				<div class="left" style="width: 120px;height: 120px;">
+					<img src="<?php echo $qrCodePath; ?>" style="width: 124px;" alt="QR Code">
+				</div>
+				<div class="right">
+					<!-- <div class="label">IMAGE</div> -->
+					<img src="<?php echo $logoPath; ?>" alt="Company Logo">
+					<div class="id"><?php echo $employeeId; ?></div>
+					<div><?php echo $employeeName; ?></div>
+				</div>
+			</div>
+
+		<a id="button_qr" class="btn" onclick="printImage()">Print QR Code</a>
+
+		<script>
+			function printImage() {
+				const content = document.getElementById("printArea").outerHTML;
+
+				const iframe = document.createElement("iframe");
+				iframe.style.position = "fixed";
+				iframe.style.right = "0";
+				iframe.style.bottom = "0";
+				iframe.style.width = "0";
+				iframe.style.height = "0";
+				iframe.style.border = "none";
+				document.body.appendChild(iframe);
+
+				const doc = iframe.contentDocument || iframe.contentWindow.document;
+				doc.open();
+				doc.write(`
+					<!DOCTYPE html>
+					<html>
+					<head>
+						<title>Print</title>
+						<style>
+							@page {
+								size: 3.5in 1.4in landscape;
+								margin: 0;
+							}
+							#qr_body {
+								font-family: Arial, sans-serif;
+								
+							}
+							.container_qr {
+								display: flex;
+								justify-content: space-between;
+								align-items: center;
+								width: 3.5in;
+								height: 1.4in;
+								padding: 10px;
+								box-sizing: border-box;
+							}
+							.left, .right {
+								flex: 1;
+								text-align: center;
+							}
+							.left img {
+								max-width: 100%;
+								max-height: 100%;
+							}
+							.right .label {
+								font-weight: bold;
+								margin-bottom: 5px;
+							}
+							.right img {
+								max-width: 80px;
+								height: auto;
+								margin-bottom: 5px;
+							}
+							.right .id {
+								font-weight: bold;
+								margin-bottom: 3px;
+							}
+						</style>
+					</head>
+					<div>
+						${content}
+					</div>
+					</html>
+				`);
+				doc.close();
+
+				iframe.onload = function () {
+					iframe.contentWindow.focus();
+					iframe.contentWindow.print();
+
+					setTimeout(() => {
+						document.body.removeChild(iframe);
+					}, 1000);
+				};
+			}
 		</script>
+
+		</div>
 		
 		
 		
 		
 		
-		
-		
+		<!--qr printing code end here -->
 		
 
       </div>
